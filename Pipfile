@@ -1,0 +1,15 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+sentence-transformers = "2.3.1"
+torch = "2.2.0"
+markdown = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"
+
