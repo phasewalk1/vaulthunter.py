@@ -1,6 +1,6 @@
 # vaulthunter.py
 
-**vaulthunter** transforms your [Obsidian](https://obsidian.md) vault into a dynamic knowledge base, accessible through an innovative AI interface. Leveraging modern embedding technologies and open source LLMs like *Mistral-7B-Instruct*, this tool enables personalized and context-aware interactions with your digital notes. It's designed for those who seek to enhance their productivity and knowledge retrieval processes by integrating cutting-edge AI capabilities directly with their personal database.
+**vaulthunter** transforms your [Obsidian](https://obsidian.md) vault into a dynamic knowledge base, accessible through an innovative AI interface. Leveraging modern embedding technologies and open source LLMs like [`Mistral-7B-Instruct-v0.2`](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.2), this tool enables personalized and context-aware interactions with your digital notes. It's designed for those who seek to enhance their productivity and knowledge retrieval processes by integrating cutting-edge AI capabilities directly with their personal database.
 
 ## Overview
 
@@ -10,7 +10,7 @@ This concoction is served with an (admittedly) ugly, prototype Electron frontend
 
 ## Features
 
-- **Embedding Generation**: Utilizes a Hugging Face access token to generate embeddings from your Obsidian vault, using the `sentence-transformers/all-mpnet-base-v2` model.
+- **Embedding Generation**: Utilizes a Hugging Face access token to generate embeddings from your Obsidian vault, using the [`sentence-transformers/all-mpnet-base-v2`](https://huggingface.co/sentence-transformers/all-mpnet-base-v2) model.
 - **Local Storage in Chroma DB**: Stores the generated embeddings locally, ensuring quick and easy retrieval.
 - **RAG with Mistral 7b Instruct**: Use the embeddings for Retrieval-Augmented Generation (RAG), providing responses based on your vault's content. It's like asking your notes a question and getting an answer, with references!
 - **Electron Frontend**: A simple, prototype frontend for interacting with *vaulthunter*. It's the window to your digital memory, no matter how it looks.
