@@ -58,7 +58,7 @@ HUGGINGFACE_ACCESS_TOKEN="z1000"
 Now you can start hunting treasures in your vault!:
 
 ```bash
-python vaulthunter.py start --vault <path-to-your-vault>
+python vaulthunter.py --vault <path-to-your-vault>
 ```
 
 And let the magic unfold. Your personal AI companion is now ready to dive into your vault and fetch the pearls of wisdom you've accumulated.
