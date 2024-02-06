@@ -49,8 +49,13 @@ pipenv sync
 ```
 
 ### Usage
+One last thing before we're ready to go, you'll need a Hugging Face access token, see [here](https://huggingface.co/docs/hub/security-tokens) for instructions on getting one if needed. Once
+you have it, put it in a `.env` file in the root, like so:
+```.env
+HUGGINGFACE_ACCESS_TOKEN="z1000"
+```
 
-To start hunting treasures in your vault, run:
+Now you can start hunting treasures in your vault!:
 
 ```bash
 python vaulthunter.py start --vault <path-to-your-vault>
