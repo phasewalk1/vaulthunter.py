@@ -1,0 +1,111 @@
+/* Use a modern font */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+body,
+html {
+    font-family: 'Roboto', sans-serif;
+    background: #121212;
+    /* Deep black */
+    color: #fff;
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chat-header {
+    background: linear-gradient(90deg, rgba(58, 123, 213, 1) 0%, rgba(0, 210, 255, 1) 100%);
+    color: #61dafb;
+    padding: 20px;
+    text-align: center;
+}
+
+.chat-window {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: white;
+    margin: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chat-input {
+    display: flex;
+    padding: 20px;
+    background: #20232a;
+}
+
+.chat-input input {
+    flex-grow: 1;
+    padding: 10px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 5px;
+}
+
+.chat-input button {
+    transition: background-color 0.3s ease;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #61dafb;
+    color: #20232a;
+    cursor: pointer;
+}
+
+.chat-input button:hover {
+    background-color: #369fcb;
+}
+
+.message {
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    max-width: 80%;
+}
+
+.you {
+    align-self: flex-end;
+    background-color: #61dafb;
+}
+
+.mistral,
+.source {
+    align-self: flex-start;
+}
+
+.mistral {
+    background-color: #ccc;
+}
+
+.source {
+    background-color: #ccc444;
+}
+
+/* Add this to your .chat-window class */
+.chat-window {
+    display: flex;
+    flex-direction: column;
+    /* ... other styles ... */
+}
+
+.loader {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

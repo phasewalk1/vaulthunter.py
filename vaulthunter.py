@@ -1,97 +1,115 @@
+import asyncio
 import os
-import sys
-import markdown
-import re
-import torch
-from sentence_transformers import SentenceTransformer, util
+import signal
+
+import click
+from rich.console import Console
+
+console = Console()
 
 
-model = SentenceTransformer("all-MiniLm-L6-v2")
-
-
-def parse_markdown_file(file_path):
-    with open(file_path, "r", encoding="utf-8") as file:
-        text = file.read()
-    html = markdown.markdown(text)
-    plaintext = re.sub(r"<.*?>", "", html)
-    return plaintext
-
-
-def generate_embeddings(model, vault_path):
-    embeddings = {}
-    print(f"Generating embeddings from vault: {vault_path}")
-    for root, _, files in os.walk(vault_path):
-        for file in files:
-            if file.endswith(".md"):
-                file_path = os.path.join(root, file)
-                content = parse_markdown_file(file_path)
-                embedding = model.encode(content, convert_to_tensor=True)
-                embeddings[file_path.split(vault_path)[1]] = embedding
-                print("Generated embeddings for", file)
-            else:
-                print("Skipping: ", file)
-    print(f"Read {len(embeddings)} files")
-    return embeddings
-
-
-def export_embeddings(embeddings, output_path):
-    print(f"Exporting embeddings to {output_path}")
-    embeddings_to_save = {
-        path: embedding.cpu().numpy() for path, embedding in embeddings.items()
-    }
-    torch.save(embeddings_to_save, output_path)
-
-
-def load_embeddings(embeddings_path):
-    print(f"Loading embeddings from {embeddings_path}")
-    embeddings = torch.load(embeddings_path)
-    embeddings = {
-        path: torch.tensor(embedding) for path, embedding in embeddings.items()
-    }
-
-
-def query_to_embedding(query):
-    return model.encode(query, convert_to_tensor=True)
-
-
-def search_embeddings_by_similarity(query, embeddings, return_n=10):
-    query_embedding = query_to_embedding(query)
-    scores = {}
-    for file_path, file_embedding in embeddings.items():
-        similarity = util.pytorch_cos_sim(query_embedding, file_embedding)
-        scores[file_path] = similarity.item()
-    sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-    return sorted_scores[:return_n]
-
-
-def interactive_similarity_search(embeddings):
+async def read_stream(stream, prefix):
     while True:
-        query = input("Enter a query or 'exit' to quit: ")
-        if query == "exit":
+        line = await stream.readline()
+        if line:
+            console.print(f"[{prefix}] {line.decode().strip()}")
+        else:
             break
-        outputs = search_embeddings_by_similarity(query, embeddings)
-        for file_path, score in outputs:
-            print(f"{file_path}: {score:.2f}")
 
 
-def main_embed():
-    vault_path = os.path.expanduser("~/Documents/phasewalk1-master")
-    embeddings = generate_embeddings(model, vault_path)
-    return embeddings
+async def read_stream_loading_bar(stream, prefix, console):
+    buffer = b""  # Use a bytes buffer
+    while True:
+        chunk = await stream.read(1024)  # Read in chunks of 1KB
+        if not chunk:
+            break  # End of stream
+        buffer += chunk
+        try:
+            # Attempt to decode the buffer to string and print
+            decoded = buffer.decode()
+            console.print(f"\n[{prefix}] {decoded}", end="")
+            buffer = b""  # Reset buffer after successful decode
+        except UnicodeDecodeError:
+            # If decode fails, handle or ignore undecodable bytes
+            # Here we choose to ignore and reset the buffer, but you could also log hex representation etc.
+            pass
+
+    # Handle any remaining bytes in the buffer
+    if buffer:
+        try:
+            decoded = buffer.decode()
+            console.print(f"[{prefix}] {decoded}", end="")
+        except UnicodeDecodeError:
+            pass  # Ignore or handle remaining undecodable bytes as needed
 
 
-def main():
-    args = sys.argv[1:]
-    embeddings = None
+async def start_process(command, cwd, prefix):
+    # Note: Using asyncio.create_subprocess_shell for an async subprocess
+    process = await asyncio.create_subprocess_shell(
+        " ".join(command),
+        cwd=cwd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        preexec_fn=os.setsid,
+    )
 
-    if len(args) != 0 and args[0] == "gen":
-        embeddings = main_embed()
-    else:
-        embeddings_path = input("Enter the path to the embeddings file: ")
-        embeddings = load_embeddings(embeddings_path)
+    # Create tasks for reading stdout and stderr simultaneously
+    await asyncio.gather(
+        read_stream(process.stdout, prefix),
+        read_stream_loading_bar(process.stderr, prefix, console),
+    )
+    return process
 
-    interactive_similarity_search(embeddings)
 
+async def start_backend():
+    return await start_process(
+        ["pipenv", "run", "uvicorn", "app:app", "--host", "0.0.0.0", "--reload"],
+        "./fastapi",
+        "Backend",
+    )
+
+
+async def start_frontend():
+    return await start_process(["npm", "start"], "./electron", "Frontend")
+
+
+def stop_processes(processes):
+    for process in processes:
+        os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+    console.print("All processes stopped.", style="bold red")
+
+
+@click.group()
+def cli():
+    pass
+
+
+@click.option(
+    "--vault", type=click.Path(exists=True), help="Path to an Obsidian vault."
+)
+@click.command()
+def start(vault):
+    """Starts the Electron frontend and FastAPI backend."""
+    console.print("Starting the VaultHunter application...", style="bold blue")
+    console.print(f"Using vault at {vault}", style="bold purple")
+
+    os.environ["VAULT"] = vault
+
+    loop = asyncio.get_event_loop()
+    backend, frontend = loop.run_until_complete(
+        asyncio.gather(start_backend(), start_frontend())
+    )
+
+    console.print("VaultHunter is running. Press Ctrl+C to stop.", style="bold green")
+
+    # Stop processes on KeyboardInterrupt
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        stop_processes([backend, frontend])
+
+
+cli.add_command(start)
 
 if __name__ == "__main__":
-    main()
+    cli()
